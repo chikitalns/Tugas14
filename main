@@ -1,0 +1,70 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run API and Web UI Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js for Web UI testing
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Step 3: Install dependencies for Web UI testing
+      - name: Install Web UI dependencies
+        working-directory: ./web-ui
+        run: |
+          npm install
+
+      # Step 4: Run Web UI tests
+      - name: Run Web UI Tests
+        working-directory: ./web-ui
+        run: |
+          npm test
+        env:
+          CI: true
+
+      # Step 5: Set up Python for API testing
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # Step 6: Install dependencies for API testing
+      - name: Install API dependencies
+        working-directory: ./api
+        run: |
+          pip install -r requirements.txt
+
+      # Step 7: Run API tests
+      - name: Run API Tests
+        working-directory: ./api
+        run: |
+          pytest --junitxml=api_test_results.xml
+
+      # Step 8: Upload test results as artefacts
+      - name: Upload Web UI Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-ui-test-results
+          path: ./web-ui/test-results/
+
+      - name: Upload API Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-test-results
+          path: ./api/api_test_results.xml
